@@ -19,9 +19,14 @@
 
 ## Demo
 
-Video de prueba incluido en el repo:
+Vista rapida del proyecto:
 
-- [Ver demo local del proyecto](demo-yolo-gemma4.mp4)
+![Demo del asistente visual local](docs/images/demo.gif)
+
+Archivos de demo incluidos:
+
+- [Demo ligera en MP4](docs/images/demo.mp4)
+- [Grabacion completa original](demo-yolo-gemma4.mp4)
 
 El demo muestra el flujo base del sistema con:
 
