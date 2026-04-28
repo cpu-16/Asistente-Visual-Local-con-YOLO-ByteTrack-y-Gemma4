@@ -25,7 +25,8 @@ Vista rapida del proyecto:
 
 Archivos de demo incluidos:
 
-- [Demo ligera en MP4](docs/images/demo.mp4)
+- [Demo completa optimizada en MP4](docs/images/demo.mp4)
+- [Demo completa en GIF](docs/images/demo.gif)
 - [Grabacion completa original](demo-yolo-gemma4.mp4)
 
 El demo muestra el flujo base del sistema con:
