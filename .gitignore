@@ -6,3 +6,5 @@ __pycache__/
 .pytest_cache/
 screenshots/
 yolo11s.pt
+models/
+.conda-py311/

@@ -18,9 +18,7 @@ def frame_to_base64(frame, max_edge: int = 448, jpeg_quality: int = 55) -> str:
         frame = cv2.resize(
             frame, (resized_width, resized_height), interpolation=cv2.INTER_AREA
         )
-    ok, buffer = cv2.imencode(
-        ".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality]
-    )
+    ok, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality])
     if not ok:
         raise RuntimeError("No se pudo codificar el frame para el VLM")
     return base64.b64encode(buffer).decode("utf-8")
@@ -33,9 +31,50 @@ class VisionLLM(Protocol):
         object_labels: list[str],
         context_name: str,
         recent_events: list[str],
+        scene_notes: list[str],
     ) -> str: ...
 
     def healthcheck(self) -> tuple[bool, str]: ...
+
+
+def extract_openai_message_content(data: dict) -> str:
+    message = data["choices"][0]["message"]
+    content = (message.get("content") or "").strip()
+    if content:
+        return content
+
+    reasoning = (message.get("reasoning_content") or "").strip()
+    finish_reason = data["choices"][0].get("finish_reason")
+    if reasoning and finish_reason == "length":
+        raise RuntimeError(
+            "LM Studio agoto tokens en razonamiento antes de responder. "
+            "Usa un modelo mas ligero o aumenta el limite de tokens."
+        )
+    if reasoning:
+        raise RuntimeError(
+            "LM Studio devolvio solo razonamiento y no una respuesta final visible."
+        )
+    raise RuntimeError("LM Studio no devolvio contenido util para la descripcion.")
+
+
+def extract_ollama_message_content(data: dict) -> str:
+    message = data.get("message", {})
+    content = (message.get("content") or "").strip()
+    if content:
+        return content
+
+    thinking = (message.get("thinking") or "").strip()
+    done_reason = data.get("done_reason")
+    if thinking and done_reason == "length":
+        raise RuntimeError(
+            "Ollama agoto tokens en thinking antes de responder. "
+            "Se necesita desactivar thinking o aumentar num_predict."
+        )
+    if thinking:
+        raise RuntimeError(
+            "Ollama devolvio thinking pero no una respuesta final visible."
+        )
+    raise RuntimeError("Ollama no devolvio contenido util para la descripcion.")
 
 
 @dataclass(slots=True)
@@ -46,6 +85,7 @@ class LMStudioVisionLLM:
     image_max_edge: int = 448
     jpeg_quality: int = 55
     max_labels: int = 8
+    max_tokens: int = 96
 
     def describe_scene(
         self,
@@ -53,24 +93,27 @@ class LMStudioVisionLLM:
         object_labels: list[str],
         context_name: str,
         recent_events: list[str],
+        scene_notes: list[str],
     ) -> str:
         image_b64 = frame_to_base64(
             frame, max_edge=self.image_max_edge, jpeg_quality=self.jpeg_quality
         )
         labels = ", ".join(object_labels[: self.max_labels]) or "none"
         events = "; ".join(recent_events[:4]) or "sin eventos recientes"
+        notes = "; ".join(scene_notes[:4]) or "sin senales adicionales"
         payload = {
             "model": self.model,
             "temperature": 0.1,
-            "max_tokens": 60,
+            "max_tokens": self.max_tokens,
             "messages": [
                 {
                     "role": "system",
                     "content": (
                         "Eres un asistente visual local rapido. "
-                        "Responde en espanol con una sola frase corta de menos de 20 palabras. "
-                        "Menciona solo lo mas visible o la accion principal. "
-                        "Sin listas. Sin especular."
+                        "Responde en espanol con una o dos frases cortas de menos de 35 palabras en total. "
+                        "Prioriza acciones humanas, manos, dedos, ojos, telefono, postura y objetos cercanos. "
+                        "Si hay senales adicionales, usalas como evidencia fuerte. "
+                        "Sin listas. Sin especular. No muestres razonamiento."
                     ),
                 },
                 {
@@ -78,9 +121,7 @@ class LMStudioVisionLLM:
                     "content": [
                         {
                             "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_b64}"
-                            },
+                            "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"},
                         },
                         {
                             "type": "text",
@@ -88,7 +129,8 @@ class LMStudioVisionLLM:
                                 f"Contexto estimado: {context_name}. "
                                 f"Etiquetas detectadas: {labels}. "
                                 f"Eventos recientes: {events}. "
-                                "Describe solo la escena actual."
+                                f"Senales adicionales: {notes}. "
+                                "Describe solo la escena actual. Si una persona hace un gesto, usa telefono, cierra los ojos o parece somnolienta, mencionarlo explicitamente. Entrega directamente la respuesta final."
                             ),
                         },
                     ],
@@ -102,7 +144,7 @@ class LMStudioVisionLLM:
         )
         response.raise_for_status()
         data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
+        return extract_openai_message_content(data)
 
     def healthcheck(self) -> tuple[bool, str]:
         try:
@@ -123,6 +165,7 @@ class OllamaVisionLLM:
     image_max_edge: int = 448
     jpeg_quality: int = 55
     max_labels: int = 8
+    num_predict: int = 96
 
     def describe_scene(
         self,
@@ -130,23 +173,27 @@ class OllamaVisionLLM:
         object_labels: list[str],
         context_name: str,
         recent_events: list[str],
+        scene_notes: list[str],
     ) -> str:
         image_b64 = frame_to_base64(
             frame, max_edge=self.image_max_edge, jpeg_quality=self.jpeg_quality
         )
         labels = ", ".join(object_labels[: self.max_labels]) or "none"
         events = "; ".join(recent_events[:4]) or "sin eventos recientes"
+        notes = "; ".join(scene_notes[:4]) or "sin senales adicionales"
         payload = {
             "model": self.model,
             "stream": False,
+            "think": False,
             "messages": [
                 {
                     "role": "system",
                     "content": (
                         "Eres un asistente visual local rapido. "
-                        "Responde en espanol con una sola frase corta de menos de 20 palabras. "
-                        "Menciona solo lo mas visible o la accion principal. "
-                        "Sin listas. Sin especular."
+                        "Responde en espanol con una o dos frases cortas de menos de 35 palabras en total. "
+                        "Prioriza acciones humanas, manos, dedos, ojos, telefono, postura y objetos cercanos. "
+                        "Si hay senales adicionales, usalas como evidencia fuerte. "
+                        "Sin listas. Sin especular. No muestres thinking."
                     ),
                 },
                 {
@@ -155,12 +202,13 @@ class OllamaVisionLLM:
                         f"Contexto estimado: {context_name}. "
                         f"Etiquetas detectadas: {labels}. "
                         f"Eventos recientes: {events}. "
-                        "Describe solo la escena actual."
+                        f"Senales adicionales: {notes}. "
+                        "Describe solo la escena actual. Si una persona hace un gesto, usa telefono, cierra los ojos o parece somnolienta, mencionarlo explicitamente. Entrega directamente la respuesta final."
                     ),
                     "images": [image_b64],
                 },
             ],
-            "options": {"temperature": 0.1, "num_predict": 60},
+            "options": {"temperature": 0.1, "num_predict": self.num_predict},
         }
         response = requests.post(
             f"{self.base_url.rstrip('/')}/api/chat",
@@ -169,7 +217,7 @@ class OllamaVisionLLM:
         )
         response.raise_for_status()
         data = response.json()
-        return data["message"]["content"].strip()
+        return extract_ollama_message_content(data)
 
     def healthcheck(self) -> tuple[bool, str]:
         try:

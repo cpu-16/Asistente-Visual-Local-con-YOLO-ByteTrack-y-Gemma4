@@ -4,6 +4,7 @@
 
 - Linux con Python 3.10+
 - Webcam integrada o externa
+- Opcional: celular con app de IP camera o stream RTSP
 - GPU NVIDIA recomendada para mejor rendimiento
 - Uno de estos runtimes:
   - `LM Studio`
@@ -35,4 +36,18 @@ Verificacion:
 
 ```bash
 curl http://localhost:11434/api/tags
+```
+
+## Usar la camara del celular
+
+Opciones practicas:
+
+- `HTTP stream` desde una app IP camera
+- `RTSP stream` si la app lo soporta
+- ambos dispositivos en la misma red local
+
+Ejemplo de ejecucion:
+
+```bash
+python main.py --camera-source "http://192.168.1.50:8080/video" --vlm-runtime ollama --vlm-model gemma4:e4b
 ```

@@ -4,75 +4,150 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![OpenCV](https://img.shields.io/badge/OpenCV-Computer_Vision-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
-![YOLO](https://img.shields.io/badge/YOLO-Real_Time_Detection-111111?style=for-the-badge)
+![YOLO11](https://img.shields.io/badge/YOLO11-Detection-111111?style=for-the-badge)
+![ByteTrack](https://img.shields.io/badge/ByteTrack-Tracking-1F6FEB?style=for-the-badge)
 ![Ollama](https://img.shields.io/badge/Ollama-Local_VLM-111111?style=for-the-badge)
 ![LM Studio](https://img.shields.io/badge/LM_Studio-OpenAI_Compatible-00D9FF?style=for-the-badge)
 
-**Asistente visual local en tiempo real con deteccion, tracking, memoria temporal y contexto automatico**
+**Vision artificial local en tiempo real con deteccion, tracking, memoria temporal, contexto automatico y razonamiento multimodal**
+
+[Demo](#demo) · [Arquitectura](#arquitectura) · [Inicio-rápido](#inicio-rápido) · [Cámara-del-celular](#cámara-del-celular) · [Documentación](#documentación)
 
 </div>
 
 ---
 
-## Documentacion
+## Demo
 
-| Seccion | Descripcion |
-|---------|-------------|
-| [01 - Arquitectura](docs/01-arquitectura.md) | Como se combinan YOLO, ByteTrack, memoria temporal y Gemma 4 |
-| [02 - Instalacion](docs/02-instalacion.md) | Preparacion del entorno, dependencias y primer arranque |
-| [03 - Uso y runtimes](docs/03-uso-y-runtimes.md) | Ejecucion con LM Studio u Ollama y ajustes de rendimiento |
-| [04 - Contexto y eventos](docs/04-contexto-y-eventos.md) | Como infiere escritorio, actividad y procedimiento |
-| [05 - Troubleshooting](docs/05-troubleshooting.md) | Errores comunes, latencia y verificacion del entorno |
+Video de prueba incluido en el repo:
+
+- [Ver demo local del proyecto](demo-yolo-gemma4.mp4)
+
+El demo muestra el flujo base del sistema con:
+
+- deteccion en tiempo real
+- tracking persistente
+- descripciones con `Gemma 4`
+- senales humanas en overlay
+- uso flexible de camara local o stream desde celular
 
 ---
 
 ## Idea general
 
-Este proyecto implementa un sistema de vision artificial local que usa la webcam de la laptop o una camara externa para:
+Este proyecto implementa un asistente visual local que combina percepcion rapida y razonamiento semantico local.
 
-- detectar objetos en tiempo real con `YOLO11s`
-- seguirlos entre frames con `ByteTrack`
-- recordar eventos recientes en memoria temporal
-- estimar automaticamente el contexto de la escena
-- describir lo que ocurre usando `Gemma 4` corriendo localmente en `LM Studio` u `Ollama`
+En lugar de usar un VLM para todos los frames, la arquitectura separa responsabilidades:
 
-La idea no es usar un VLM para todos los frames, sino combinar:
+- `YOLO11s` detecta objetos y personas en tiempo real
+- `ByteTrack` mantiene continuidad temporal
+- una memoria corta genera eventos y contexto
+- `Gemma 4` describe e interpreta la escena solo cuando aporta valor
 
-- un detector rapido para mantener FPS
-- un tracker para continuidad temporal
-- un VLM local para razonamiento semantico bajo demanda
+El resultado es una base mas realista para construir un sistema de:
+
+- asistencia visual local
+- monitoreo de actividad
+- apoyo a procedimientos
+- analitica contextual sobre una estacion de trabajo
 
 ---
 
-## Capacidades actuales
+## Estado actual
 
-- Deteccion de objetos/personas en tiempo real con webcam
-- Tracking persistente usando `ByteTrack`
-- Soporte para `LM Studio` y `Ollama`
-- Descripciones de escena en espanol
-- Memoria temporal de objetos detectados
-- Eventos recientes como aparicion o salida de objetos
-- Inferencia automatica de contexto:
+Actualmente el sistema ya puede:
+
+- detectar objetos y personas con `YOLO11s`
+- seguir objetos entre frames con `ByteTrack`
+- describir la escena en espanol con `Gemma 4`
+- cambiar entre `LM Studio` y `Ollama`
+- usar webcam local o camara del celular por red local
+- reconstruir contexto de escena:
   - `escritorio`
   - `actividad`
   - `procedimiento`
-- Overlay con FPS, runtime, latencia VLM, contexto y eventos
+- mantener memoria temporal de entidades y eventos
+- detectar senales humanas relevantes:
+  - manos visibles
+  - conteo de dedos con landmarks
+  - posible llamada telefonica
+  - ojos posiblemente cerrados
+  - posible somnolencia
+- recuperarse mejor ante cortes del stream del celular
 
 ---
 
 ## Arquitectura
 
 ```text
-Webcam -> OpenCV -> YOLO11s -> ByteTrack -> SceneMemory -> Context Engine -> Gemma 4 -> Overlay
+Fuente de video -> OpenCV -> YOLO11s -> ByteTrack -> SceneMemory -> Context Engine -> Human Signals -> Gemma 4 -> Overlay
 ```
 
-### Roles de cada componente
+### Componentes
 
-- `YOLO11s`: detecta que objetos hay y donde estan
-- `ByteTrack`: mantiene IDs para seguir objetos entre frames
-- `SceneMemory`: guarda entidades y eventos recientes
-- `Context Engine`: estima si la escena parece escritorio, actividad o procedimiento
-- `Gemma 4`: describe y razona sobre la escena con contexto extra
+- `OpenCV`
+  - captura webcam local o stream IP/RTSP
+- `YOLO11s`
+  - deteccion de objetos y personas
+- `ByteTrack`
+  - tracking persistente de entidades
+- `SceneMemory`
+  - historial corto y eventos recientes
+- `Context Engine`
+  - clasifica la escena en escritorio, actividad o procedimiento
+- `Human Signals`
+  - manos, dedos, rostro, ojos, telefono
+- `Gemma 4`
+  - descripcion semantica y razonamiento breve
+
+---
+
+## Capacidades principales
+
+### Percepcion visual
+
+- deteccion continua con `YOLO11s`
+- tracking con `ByteTrack`
+- soporte para camara laptop, USB o celular por red
+
+### Razonamiento local
+
+- integracion con `LM Studio`
+- integracion con `Ollama`
+- prompts optimizados para respuestas breves en espanol
+
+### Contexto y eventos
+
+- memoria temporal de entidades
+- eventos como aparicion y salida de objetos
+- inferencia de contexto automatico
+
+### Senales humanas
+
+- gestos manuales visibles
+- conteo de dedos por mano cuando los landmarks son detectables
+- llamada telefonica probable
+- ojos cerrados
+- somnolencia heuristica
+
+### Robustez
+
+- reconexion automatica de stream IP
+- timeouts configurables
+- modo mas ligero para celular con procesamiento cada `N` frames
+
+---
+
+## Documentación
+
+| Sección | Descripción |
+|---------|-------------|
+| [01 - Arquitectura](docs/01-arquitectura.md) | Cómo se combinan YOLO, ByteTrack, memoria temporal y Gemma 4 |
+| [02 - Instalación](docs/02-instalacion.md) | Entorno, dependencias y primer arranque |
+| [03 - Uso y runtimes](docs/03-uso-y-runtimes.md) | Ejecución con LM Studio/Ollama y modos webcam/celular |
+| [04 - Contexto y eventos](docs/04-contexto-y-eventos.md) | Contexto automático, señales y límites actuales |
+| [05 - Troubleshooting](docs/05-troubleshooting.md) | Errores comunes, latencia y red local |
+| [06 - Resumen del proyecto](docs/06-resumen-del-proyecto.md) | Resumen técnico y hoja de ruta hacia casos reales |
 
 ---
 
@@ -85,17 +160,19 @@ vision-assistant-local/
 │   ├── 02-instalacion.md
 │   ├── 03-uso-y-runtimes.md
 │   ├── 04-contexto-y-eventos.md
-│   └── 05-troubleshooting.md
+│   ├── 05-troubleshooting.md
+│   └── 06-resumen-del-proyecto.md
 ├── src/
 │   └── vision_assistant/
 │       ├── app.py
 │       ├── config.py
 │       ├── context.py
+│       ├── signals.py
 │       └── vlm.py
-├── .gitignore
+├── demo-yolo-gemma4.mp4
 ├── LICENSE
-├── main.py
 ├── README.md
+├── main.py
 └── requirements.txt
 ```
 
@@ -105,14 +182,17 @@ vision-assistant-local/
 
 - `Python`
 - `OpenCV`
-- `Ultralytics YOLO`
+- `Ultralytics`
+- `YOLO11s`
 - `ByteTrack`
-- `LM Studio` o `Ollama`
+- `MediaPipe Tasks HandLandmarker`
+- `LM Studio`
+- `Ollama`
 - `Gemma 4`
 
 ---
 
-## Inicio rapido
+## Inicio rápido
 
 ### 1. Crear entorno virtual
 
@@ -129,31 +209,62 @@ pip install -r requirements.txt
 
 ### 3. Arrancar un runtime local
 
-#### Opcion A: LM Studio
-
-- Carga un modelo multimodal compatible, por ejemplo `google/gemma-4-26b-a4b`
-- Habilita el servidor local compatible con OpenAI en `http://localhost:1234`
-
-#### Opcion B: Ollama
+#### Opción A: Ollama
 
 ```bash
 ollama pull gemma4:e4b
 ollama serve
 ```
 
-### 4. Ejecutar la aplicacion
+#### Opción B: LM Studio
 
-Con `Ollama`:
+- Carga un modelo multimodal como `google/gemma-4-26b-a4b`
+- Levanta el servidor local en `http://localhost:1234`
+
+### 4. Ejecutar la aplicación
+
+Modo recomendado en laptop:
 
 ```bash
-python main.py --vlm-runtime ollama --vlm-model gemma4:e4b --scene-cooldown 10 --scene-change-min-interval 4
+python main.py --camera-source 0 --vlm-runtime ollama --vlm-model gemma4:e4b --display-scale 1.2 --process-every-n-frames 2
 ```
 
-Con `LM Studio`:
+Modo recomendado con más fluidez para stream del celular:
 
 ```bash
-python main.py --vlm-runtime lmstudio --vlm-model google/gemma-4-26b-a4b
+python main.py --camera-source "http://IP_DEL_CELULAR:PUERTO/video" --vlm-runtime ollama --vlm-model gemma4:e4b --scene-cooldown 8 --scene-change-min-interval 2.5 --camera-open-timeout-ms 8000 --camera-read-timeout-ms 12000 --camera-reconnect-delay 2.0 --display-scale 1.2 --process-every-n-frames 2
 ```
+
+Modo equivalente con `LM Studio`:
+
+```bash
+python main.py --camera-source 0 --vlm-runtime lmstudio --vlm-model google/gemma-4-e2b --display-scale 1.2 --process-every-n-frames 2
+```
+
+---
+
+## Cámara del celular
+
+La aplicación acepta dos tipos de fuente de video:
+
+- índice local: `0`, `1`, `2`
+- URL de stream: `http://...` o `rtsp://...`
+
+La ruta más práctica es usar una app como `IP Webcam` en Android y pasar el stream por red local.
+
+Ejemplo:
+
+```bash
+python main.py --camera-source "http://192.168.0.4:8080/video" --vlm-runtime ollama --vlm-model gemma4:e2b --scene-cooldown 8 --scene-change-min-interval 2.5 --camera-open-timeout-ms 8000 --camera-read-timeout-ms 12000 --camera-reconnect-delay 2.0 --display-scale 1.2 --process-every-n-frames 2
+```
+
+Recomendaciones para el celular:
+
+- usar la misma red Wi-Fi que la laptop
+- bajar la resolucion del stream a `640x480` o `800x600`
+- usar `15 FPS` si buscas estabilidad
+- quitar ahorro de bateria a la app de camara
+- mantener la app abierta en primer plano durante la prueba
 
 ---
 
@@ -162,84 +273,67 @@ python main.py --vlm-runtime lmstudio --vlm-model google/gemma-4-26b-a4b
 - `Q`: salir
 - `P`: pausar video
 - `S`: guardar screenshot
-- `D`: forzar descripcion de escena
+- `D`: forzar descripción
 
 ---
 
-## Contexto automatico
+## Ajustes útiles
 
-El sistema intenta inferir el tipo de escena usando objetos presentes, estabilidad visual, movimiento y eventos recientes.
-
-### Contextos actuales
-
-- `escritorio`
-  - objetos estables como laptop, teclado, mouse, telefono, libros
-- `actividad`
-  - personas, entradas/salidas y dinamica de movimiento
-- `procedimiento`
-  - manipulacion de objetos y cambios frecuentes
-
-Este mecanismo no depende solo del VLM. Usa una arquitectura hibrida:
-
-- reglas simples de contexto
-- memoria temporal
-- tracking persistente
-- VLM solo para descripcion y razonamiento breve
+- `--display-scale`
+  - agranda la ventana mostrada
+- `--process-every-n-frames`
+  - reduce carga de CPU/GPU para streams IP
+- `--camera-open-timeout-ms`
+  - timeout al abrir stream IP
+- `--camera-read-timeout-ms`
+  - timeout de lectura del stream IP
+- `--camera-reconnect-delay`
+  - espera antes de reconectar
+- `--vlm-image-max-edge`
+  - baja resolución enviada al VLM
+- `--vlm-jpeg-quality`
+  - comprime imagen para respuesta más rápida
 
 ---
 
-## Casos de uso realistas
+## Casos de uso reales
 
-### 1. Asistente de escritorio inteligente
+### Asistente de escritorio
 
-- localizar objetos visibles
-- describir el estado de la mesa
-- recordar cambios recientes
+- detectar objetos visibles
+- describir cambios en la mesa
+- observar señales de atención o actividad
 
-### 2. Monitor local de actividad
+### Monitor local de actividad
 
-- detectar presencia
-- observar entradas o salidas de escena
-- resumir eventos relevantes
+- presencia
+- interacción con objetos
+- llamada telefónica
+- somnolencia o inactividad visible
 
-### 3. Asistente de procedimientos
+### Asistente de procedimientos
 
-- observar secuencias de manipulacion
-- detectar cambios de objetos
-- inferir que la escena parece una tarea o proceso
-
----
-
-## Rendimiento
-
-En hardware con GPU dedicada, la parte de deteccion y tracking puede mantenerse fluida. El cuello de botella suele estar en el VLM.
-
-Recomendacion practica:
-
-- usa `YOLO11s` para tiempo real
-- usa `Ollama + gemma4:e4b` para respuestas mas rapidas
-- deja `LM Studio + 26B` para pruebas de mayor calidad semantica
+- observar manipulación de objetos
+- resumir la escena de trabajo
+- servir como base para reglas de pasos o validaciones futuras
 
 ---
 
-## Roadmap
+## Próximos pasos
 
-- Zonas configurables en pantalla
-- Historial consultable de 30-60 segundos
-- Preguntas sobre la escena actual y reciente
-- Reglas de interaccion persona-objeto
-- Deteccion de pasos/procedimientos mas explicita
-- Exportacion de eventos
+- zonas configurables en pantalla
+- historial consultable de `30-120` segundos
+- preguntas sobre la escena reciente
+- reglas persona-objeto más fuertes
+- pose corporal y atención más finas
+- API local o panel web
+- integración futura vía MCP
 
 ---
 
-## Contribuir
+## Repositorio
 
-1. Fork el proyecto
-2. Crea tu rama: `git checkout -b feature/nueva-funcionalidad`
-3. Commit: `git commit -m 'Añade nueva funcionalidad'`
-4. Push: `git push origin feature/nueva-funcionalidad`
-5. Abre un Pull Request
+- GitHub: [cpu-16/Asistente-Visual-Local-con-YOLO-ByteTrack-y-Gemma4](https://github.com/cpu-16/Asistente-Visual-Local-con-YOLO-ByteTrack-y-Gemma4)
 
 ---
 
@@ -253,6 +347,7 @@ Este proyecto se publica bajo licencia `Apache-2.0`.
 
 - [Ultralytics YOLO](https://docs.ultralytics.com/)
 - [ByteTrack](https://github.com/ifzhang/ByteTrack)
+- [MediaPipe](https://ai.google.dev/edge/mediapipe)
 - [Ollama](https://ollama.com/)
 - [LM Studio](https://lmstudio.ai/)
 - [Gemma](https://ai.google.dev/gemma)
@@ -261,6 +356,8 @@ Este proyecto se publica bajo licencia `Apache-2.0`.
 
 <div align="center">
 
-**Vision artificial local con contexto, memoria y razonamiento semantico**
+**Construido localmente por `cpu-16` y OpenCode.**
+
+Hecho con enfoque practico, privacidad local y ganas de llevar vision artificial al mundo real.
 
 </div>

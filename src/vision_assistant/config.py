@@ -6,9 +6,15 @@ from pathlib import Path
 
 @dataclass(slots=True)
 class AppConfig:
+    camera_source: str = "0"
     camera_index: int = 0
     cam_width: int = 1280
     cam_height: int = 720
+    display_scale: float = 1.15
+    camera_open_timeout_ms: int = 8000
+    camera_read_timeout_ms: int = 12000
+    camera_reconnect_delay_seconds: float = 2.0
+    process_every_n_frames: int = 1
     detector_model: str = "yolo11s.pt"
     detector_confidence: float = 0.4
     detector_classes: list[int] = field(default_factory=list)
@@ -24,4 +30,6 @@ class AppConfig:
     vlm_jpeg_quality: int = 55
     vlm_max_labels: int = 8
     max_recent_events: int = 4
+    enable_hand_signals: bool = True
+    hand_model_path: Path = Path("models/hand_landmarker.task")
     screenshot_dir: Path = Path("screenshots")
