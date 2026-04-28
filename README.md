@@ -23,12 +23,6 @@ Vista rapida del proyecto:
 
 ![Demo del asistente visual local](docs/images/demo.gif)
 
-Archivos de demo incluidos:
-
-- [Demo completa optimizada en MP4](docs/images/demo.mp4)
-- [Demo completa en GIF](docs/images/demo.gif)
-- [Grabacion completa original](demo-yolo-gemma4.mp4)
-
 El demo muestra el flujo base del sistema con:
 
 - deteccion en tiempo real
