@@ -21,7 +21,11 @@
 
 Vista rapida del proyecto:
 
-![Demo del asistente visual local](docs/images/demo.gif)
+<div align="center">
+
+<img src="docs/images/demo.gif" alt="Demo del asistente visual local" width="100%">
+
+</div>
 
 El demo muestra el flujo base del sistema con:
 
